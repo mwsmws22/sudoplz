@@ -24,8 +24,10 @@ RATE_LIMIT_FILE = CONFIG_DIR / "rate_limit.json"
 AUDIT_LOG_FILE = CONFIG_DIR / "audit.log"
 TOTP_SECRET_FILE = CONFIG_DIR / "totp_secret.enc"
 
-SSH_ENCRYPTED_FILE = HOME / ".sudo_askpass.ssh"
-AGE_ENCRYPTED_FILE = HOME / ".sudo_askpass.age"
+SSH_ENCRYPTED_FILE = CONFIG_DIR / "askpass.ssh"
+AGE_ENCRYPTED_FILE = CONFIG_DIR / "askpass.age"
+_LEGACY_SSH_FILE = HOME / ".sudo_askpass.ssh"
+_LEGACY_AGE_FILE = HOME / ".sudo_askpass.age"
 
 SSH_KEY_CANDIDATES: list[tuple[str, str]] = [
     ("id_ed25519", "Ed25519"),
@@ -62,8 +64,24 @@ def find_ssh_key() -> tuple[Path | None, Path | None, str | None]:
     return None, None, None
 
 
+def migrate_legacy_encrypted_blobs() -> None:
+    """Move leftover $HOME ciphertext into CONFIG_DIR (once)."""
+    CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+    for legacy, dest in (
+        (_LEGACY_AGE_FILE, AGE_ENCRYPTED_FILE),
+        (_LEGACY_SSH_FILE, SSH_ENCRYPTED_FILE),
+    ):
+        if not legacy.is_file() or dest.exists():
+            continue
+        legacy.replace(dest)
+        dest.chmod(0o600)
+        # Askpass expiry uses mtime; a relocate must not look like a 7-day-old secret.
+        os.utime(dest, None)
+
+
 def load_config() -> dict[str, Any]:
     """Merge DEFAULT_CONFIG with ~/.config/sudoplz/config.json."""
+    migrate_legacy_encrypted_blobs()
     config = dict(DEFAULT_CONFIG)
     if not CONFIG_FILE.exists():
         return config

@@ -28,6 +28,7 @@ from sudoplz.core import (
     has_age,
     load_config,
     load_totp_secret,
+    migrate_legacy_encrypted_blobs,
     save_totp_secret,
     verify_totp,
 )
@@ -342,6 +343,7 @@ def main() -> None:
     config_parser.set_defaults(func=cmd_config)
 
     args = parser.parse_args()
+    migrate_legacy_encrypted_blobs()
     sys.exit(0 if args.func(args) else 1)
 
 

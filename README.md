@@ -86,8 +86,10 @@ sudoplz test
 
 Passwords are encrypted with your SSH key:
 
-- **Ed25519**: `age` encryption, stored at `~/.sudo_askpass.age`
-- **RSA/ECDSA/DSA**: OpenSSL asymmetric encryption, stored at `~/.sudo_askpass.ssh`
+- **Ed25519**: `age` encryption, stored at `~/.config/sudoplz/askpass.age`
+- **RSA/ECDSA/DSA**: OpenSSL asymmetric encryption, stored at `~/.config/sudoplz/askpass.ssh`
+
+Older `~/.sudo_askpass.age` / `~/.sudo_askpass.ssh` files are moved into that directory on first `askpass` or `sudoplz` run.
 
 Encrypted files have 600 permissions. Key preference: ed25519 > ecdsa > rsa > dsa. Falls back to the system keyring if available. Refuses plain text storage.
 
